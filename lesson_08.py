@@ -25,14 +25,13 @@ def show_employees(employees):
         after_tax = salary - tax
         name = employee["name"]
 
-        print(f"{name}: before tax {salary:.2f},tax {tax:.2f},after tax {after_tax:.2f} yuan")
+        print(f"{name}: before tax {salary:.2f}, tax {tax:.2f}, after tax {after_tax:.2f} yuan")
 
 def main():
     employees = []
     while True:
         name = input("请输入姓名，输入 q 结束：")
     
-
         if name.lower() == "q":
             if len(employees) < 2:
                 print("请至少录入两名员工。")
