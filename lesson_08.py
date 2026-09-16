@@ -2,17 +2,17 @@ import json
 
 def calculate_tax(salary):
     if salary <= 5000:
-            tax = 0
+        tax = 0
     elif salary <= 10000:
-            tax = (salary - 5000) * 0.1
+        tax = (salary - 5000) * 0.1
     else:
-            tax = 500 + (salary - 10000) * 0.2
+        tax = 500 + (salary - 10000) * 0.2
     
     return tax
 
 def save_employees(employees):
      with open("employees.json", "w", encoding="utf-8") as file:
-                json.dump(employees, file, ensure_ascii=False, indent=2)
+        json.dump(employees, file, ensure_ascii=False, indent=2)
 
 def load_employees():
     with open("employees.json", "r", encoding="utf-8") as file:
@@ -25,7 +25,10 @@ def show_employees(employees):
         after_tax = salary - tax
         name = employee["name"]
 
-        print(f"{name}: before tax {salary:.2f}, tax {tax:.2f}, after tax {after_tax:.2f} yuan")
+        print(
+            f"{name}: before tax {salary:.2f}, "
+            f"tax {tax:.2f}, after tax {after_tax:.2f} yuan"
+        )
 
 def main():
     employees = []
@@ -36,13 +39,7 @@ def main():
             if len(employees) < 2:
                 print("请至少录入两名员工。")
                 continue
-        
-            
-            
             break
-
-    
-        
 
         while True:
             salary_text = input("请输入工资：")
@@ -59,22 +56,16 @@ def main():
                 continue
             break
 
-
-    
-
-        employees.append(
-            {
+        employees.append({
             "name": name,
             "salary": salary
-            }
-        )
+        })
 
     save_employees(employees)
 
     saved_employees = load_employees()
 
     show_employees(saved_employees)
-
 
 if __name__ == "__main__":
     main()
