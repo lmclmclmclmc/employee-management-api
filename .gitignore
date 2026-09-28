@@ -4,3 +4,4 @@ __pycache__/
 employees.json
 .vscode/
 *.db
+.venv/
