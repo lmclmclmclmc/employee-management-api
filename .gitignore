@@ -5,3 +5,4 @@ employees.json
 .vscode/
 *.db
 .venv/
+.env

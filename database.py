@@ -1,6 +1,10 @@
 import sqlite3
+import os
 
-DATABASE_NAME = "api_employees.db"
+DATABASE_NAME = os.getenv(
+    "DATABASE_NAME",
+    "api_employees.db"
+)
 
 def initialize_database():
     with sqlite3.connect(DATABASE_NAME) as connection:
@@ -39,7 +43,7 @@ def delete_employee(employee_id):
             "DELETE FROM employees WHERE id = ?",
             (employee_id,)
         )
-    
+
     return employee
 
 
@@ -56,12 +60,18 @@ def create_employee(name, salary):
             "salary": salary
         }
 
-def list_employees():
+def list_employees(limit=10, offset=0):
     with sqlite3.connect(DATABASE_NAME) as connection:
         connection.row_factory = sqlite3.Row
 
         rows = connection.execute(
-            "SELECT id, name, salary FROM employees ORDER BY id"
+            """
+            SELECT id, name, salary 
+            FROM employees 
+            ORDER BY id
+            LIMIT ? OFFSET ?
+            """,
+            (limit, offset)
         ).fetchall()
 
         return [dict(row) for row in rows]
