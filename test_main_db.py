@@ -9,18 +9,48 @@ from main_db import app
 
 class TestDatabaseEmployeeAPI(unittest.TestCase):
     def setUp(self):
-        self.temporay_directory = TemporaryDirectory()
+        self.temporary_directory = TemporaryDirectory()
 
         database.DATABASE_NAME = str(
-            Path(self.temporay_directory.name) / "test.db"
+            Path(self.temporary_directory.name) / "test.db"
         )
 
         database.initialize_database()
 
         self.client = TestClient(app)
+        self.client.post(
+    "/register",
+    json={
+        "username": "admin",
+        "password": "development-password",
+    },
+)
+        login_response = self.client.post(
+            "/login",
+            data={
+                "username": "admin",
+                "password": "development-password",
+            },
+        )
+
+        token = login_response.json()["access_token"]
+
+        self.client.headers.update({
+            "Authorization": f"Bearer {token}"
+        })
 
     def tearDown(self):
-        self.temporay_directory.cleanup()
+        self.temporary_directory.cleanup()
+
+    def test_write_requires_token(self):
+        unauthorized_client = TestClient(app)
+
+        response = unauthorized_client.post(
+            "/employees",
+            json={"name": "wang", "salary": 8000}
+        )
+
+        self.assertEqual(response.status_code, 401)
 
     def test_create_and_list_employees(self):
         create_response = self.client.post(
@@ -31,11 +61,11 @@ class TestDatabaseEmployeeAPI(unittest.TestCase):
         self.assertEqual(create_response.status_code, 201)
         self.assertEqual(create_response.json()["id"], 1)
 
-        list_respone = self.client.get("/employees")
+        list_response = self.client.get("/employees")
 
-        self.assertEqual(list_respone.status_code, 200)
-        self.assertEqual(len(list_respone.json()), 1)
-        self.assertEqual(list_respone.json()[0]["name"], "wang")
+        self.assertEqual(list_response.status_code, 200)
+        self.assertEqual(len(list_response.json()), 1)
+        self.assertEqual(list_response.json()[0]["name"], "wang")
 
     def test_update_and_delete_employee(self):
         self.client.post(

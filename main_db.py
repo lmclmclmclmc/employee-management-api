@@ -1,121 +1,60 @@
-from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel, Field
+import logging
+import time
+from health_router import router as health_router
+from contextlib import asynccontextmanager
+from config import ALLOWED_ORIGINS
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 
-from database import (
-    create_employee as create_employee_in_db,
-    initialize_database,
-    list_employees as list_employees_from_db,
-    get_employee as get_employee_from_db,
-    update_employee as update_employee_in_db,
-    delete_employee as delete_employee_from_db,
+from auth_router import router as auth_router
+from database import initialize_database
+from employee_router import router as employee_router
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
 )
 
-class EmployeeUpdate(BaseModel):
-    name: str | None = Field(default=None, min_length=1)
-    salary: float | None = Field(default=None, ge=0)
+logger = logging.getLogger(__name__)
 
-class EmployeeResponse(BaseModel):
-    id: int
-    name: str
-    salary: float
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    initialize_database()
+    yield
 
-app = FastAPI()
-initialize_database()
+app = FastAPI(lifespan=lifespan)
 
-
-
-class EmployeeCreate(BaseModel):
-    name: str = Field(min_length=1)
-    salary: float = Field(ge=0)
+app.include_router(auth_router)
+app.include_router(employee_router)
+app.include_router(health_router)
 
 
-@app.patch("/employees/{employee_id}", response_model=EmployeeResponse)
-def partially_update_employee(
-    employee_id: int,
-    employee_update: EmployeeUpdate
-):
-    current_employee = get_employee_from_db(employee_id)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    if current_employee is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Employee not Found"
-        )
 
-    update_data = employee_update.model_dump(
-        exclude_none=True
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.perf_counter()
+
+    response = await call_next(request)
+
+    duration_ms = (
+        time.perf_counter() - start_time
+    ) * 1000
+
+    logger.info(
+        "%s %s status=%s duration_ms=%.2f",
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration_ms,
     )
 
-    new_name = update_data.get(
-        "name",
-        current_employee["name"]
-    )
-    new_salary = update_data.get(
-        "salary",
-        current_employee["salary"]
-    )
-
-    return update_employee_in_db(
-        employee_id,
-        new_name,
-        new_salary
-    )
-
-@app.put("/employees/{employee_id}", response_model=EmployeeResponse)
-def update_employee(
-    employee_id: int,
-    employee_update: EmployeeCreate
-):
-    employee = update_employee_in_db(
-        employee_id,
-        employee_update.name,
-        employee_update.salary
-    )
-
-    if employee is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Employee not found"
-        )
-
-    return employee
-
-@app.delete("/employees/{employee_id}", response_model=EmployeeResponse)
-def delete_employee(employee_id: int):
-    employee = delete_employee_from_db(employee_id)
-
-    if employee is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Employee not found"
-        )
-
-    return employee
-
-@app.get("/employees/{employee_id}", response_model=EmployeeResponse)
-def get_employee(employee_id: int):
-    employee = get_employee_from_db(employee_id)
-
-    if employee is None:
-        raise HTTPException(
-            status_code=404,
-            detail="employee not found"
-        )
-
-    return employee 
-
-@app.post("/employees", status_code=201, response_model=EmployeeResponse)
-def create_employee(employee: EmployeeCreate):
-    return create_employee_in_db(
-        employee.name,
-        employee.salary
-    )
-
-@app.get("/employees", response_model=list[EmployeeResponse])
-def list_employees(
-    limit: int = Query(default=10, ge=1, le=100),
-    offset: int = Query(default=0, ge=0)
-):
-    return list_employees_from_db(limit, offset)
-
-
+    return response

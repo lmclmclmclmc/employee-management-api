@@ -1,10 +1,7 @@
 import sqlite3
-import os
 
-DATABASE_NAME = os.getenv(
-    "DATABASE_NAME",
-    "api_employees.db"
-)
+
+from config import DATABASE_NAME
 
 def initialize_database():
     with sqlite3.connect(DATABASE_NAME) as connection:
@@ -15,6 +12,60 @@ def initialize_database():
                 salary REAL NOT NULL CHECK (salary >= 0)
             )
         """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL
+            )
+        """)
+
+def create_user(username, password_hash):
+    try:
+        with sqlite3.connect(DATABASE_NAME) as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO users (username, password_hash)
+                VALUES (?,?)
+                """,
+                (username, password_hash),
+            )
+
+            return{
+                "id": cursor.lastrowid,
+                "username": username,
+                "password_hash": password_hash,
+            }
+
+    except sqlite3.IntegrityError:
+        return None
+
+def get_user_by_username(username):
+    with sqlite3.connect(DATABASE_NAME) as connection:
+        connection.row_factory = sqlite3.Row
+
+        row = connection.execute(
+            """
+            SELECT id, username, password_hash
+            FROM users
+            WHERE username = ?
+
+            """,
+            (username,),
+        ).fetchone()
+
+        if row is None:
+            return None
+
+        return dict(row)
+
+def check_database_connection():
+    try:
+        with sqlite3.connect(DATABASE_NAME) as connection:
+            connection.execute("SELECT 1")
+        return True
+    except sqlite3.Error:
+        return False
 
 def update_employee(employee_id, name, salary):
     with sqlite3.connect(DATABASE_NAME) as connection:
