@@ -6,3 +6,5 @@ employees.json
 *.db
 .venv/
 .env
+.coverage
+htmlcov/

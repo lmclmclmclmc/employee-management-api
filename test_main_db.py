@@ -78,6 +78,48 @@ class TestDatabaseEmployeeAPI(unittest.TestCase):
         get_response = self.client.get("/employees/1")
         self.assertEqual(get_response.status_code, 404)
 
+    def test_get_employee(self):
+        self.client.post(
+            "/employees",
+            json={"name": "zhang", "salary": 9000},
+        )
+
+        response = self.client.get("/employees/1")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["name"], "zhang")
+        self.assertEqual(response.json()["salary"], 9000)
+
+    def test_patch_employee(self):
+        self.client.post(
+            "/employees",
+            json={"name": "chen", "salary": 7000},
+        )
+
+        response = self.client.patch(
+            "/employees/1",
+            json={"salary": 9500},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["name"], "chen")
+        self.assertEqual(response.json()["salary"], 9500)
+
+    def test_missing_employee_writes_return_404(self):
+        put_response = self.client.put(
+            "/employees/999",
+            json={"name": "nobody", "salary": 8000},
+        )
+        patch_response = self.client.patch(
+            "/employees/999",
+            json={"salary": 9000},
+        )
+        delete_response = self.client.delete("/employees/999")
+
+        self.assertEqual(put_response.status_code, 404)
+        self.assertEqual(patch_response.status_code, 404)
+        self.assertEqual(delete_response.status_code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()
