@@ -12,11 +12,13 @@ from security import (
 
 router = APIRouter(tags=["authentication"])
 
+
 @router.get("/me")
 def read_current_user(
     username: str = Depends(get_current_username),
 ):
     return {"username": username}
+
 
 @router.post(
     "/register",
@@ -39,14 +41,13 @@ def register(user: UserCreate):
 
     return created_user
 
+
 @router.post(
     "/login",
     response_model=TokenResponse,
-
 )
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-
 ):
     user = get_user_by_username(form_data.username)
 

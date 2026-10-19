@@ -4,7 +4,6 @@ from fastapi.security import OAuth2PasswordBearer
 from database import get_user_by_username
 from security import decode_access_token
 
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 

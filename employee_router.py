@@ -2,9 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from database import (
     create_employee as create_employee_in_db,
+)
+from database import (
     delete_employee as delete_employee_from_db,
+)
+from database import (
     get_employee as get_employee_from_db,
+)
+from database import (
     list_employees as list_employees_from_db,
+)
+from database import (
     update_employee as update_employee_in_db,
 )
 from dependencies import get_current_username
@@ -13,7 +21,6 @@ from schemas import (
     EmployeeResponse,
     EmployeeUpdate,
 )
-
 
 router = APIRouter(
     prefix="/employees",

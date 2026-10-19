@@ -1,7 +1,7 @@
 import sqlite3
 
-
 from config import DATABASE_NAME
+
 
 def initialize_database():
     with sqlite3.connect(DATABASE_NAME) as connection:
@@ -20,6 +20,7 @@ def initialize_database():
             )
         """)
 
+
 def create_user(username, password_hash):
     try:
         with sqlite3.connect(DATABASE_NAME) as connection:
@@ -31,7 +32,7 @@ def create_user(username, password_hash):
                 (username, password_hash),
             )
 
-            return{
+            return {
                 "id": cursor.lastrowid,
                 "username": username,
                 "password_hash": password_hash,
@@ -39,6 +40,7 @@ def create_user(username, password_hash):
 
     except sqlite3.IntegrityError:
         return None
+
 
 def get_user_by_username(username):
     with sqlite3.connect(DATABASE_NAME) as connection:
@@ -59,6 +61,7 @@ def get_user_by_username(username):
 
         return dict(row)
 
+
 def check_database_connection():
     try:
         with sqlite3.connect(DATABASE_NAME) as connection:
@@ -66,6 +69,7 @@ def check_database_connection():
         return True
     except sqlite3.Error:
         return False
+
 
 def update_employee(employee_id, name, salary):
     with sqlite3.connect(DATABASE_NAME) as connection:
@@ -75,13 +79,18 @@ def update_employee(employee_id, name, salary):
             SET name = ?, salary = ?
             WHERE id = ?
             """,
-            (name, salary, employee_id,)
+            (
+                name,
+                salary,
+                employee_id,
+            ),
         )
 
         if cursor.rowcount == 0:
             return None
 
     return get_employee(employee_id)
+
 
 def delete_employee(employee_id):
     employee = get_employee(employee_id)
@@ -90,10 +99,7 @@ def delete_employee(employee_id):
         return None
 
     with sqlite3.connect(DATABASE_NAME) as connection:
-        connection.execute(
-            "DELETE FROM employees WHERE id = ?",
-            (employee_id,)
-        )
+        connection.execute("DELETE FROM employees WHERE id = ?", (employee_id,))
 
     return employee
 
@@ -101,15 +107,11 @@ def delete_employee(employee_id):
 def create_employee(name, salary):
     with sqlite3.connect(DATABASE_NAME) as connection:
         cursor = connection.execute(
-            "INSERT INTO employees (name, salary) VALUES (?, ?)",
-            (name, salary)
+            "INSERT INTO employees (name, salary) VALUES (?, ?)", (name, salary)
         )
 
-        return {
-            "id": cursor.lastrowid,
-            "name": name,
-            "salary": salary
-        }
+        return {"id": cursor.lastrowid, "name": name, "salary": salary}
+
 
 def list_employees(limit=10, offset=0):
     with sqlite3.connect(DATABASE_NAME) as connection:
@@ -122,10 +124,11 @@ def list_employees(limit=10, offset=0):
             ORDER BY id
             LIMIT ? OFFSET ?
             """,
-            (limit, offset)
+            (limit, offset),
         ).fetchall()
 
         return [dict(row) for row in rows]
+
 
 def get_employee(employee_id):
     with sqlite3.connect(DATABASE_NAME) as connection:
@@ -137,14 +140,13 @@ def get_employee(employee_id):
             FROM employees
             WHERE id = ?    
             """,
-            (employee_id,)
+            (employee_id,),
         ).fetchone()
 
         if row is None:
             return None
 
         return dict(row)
-
 
 
 if __name__ == "__main__":

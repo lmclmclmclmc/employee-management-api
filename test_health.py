@@ -7,13 +7,12 @@ from fastapi.testclient import TestClient
 import database
 from main_db import app
 
+
 class TestHealthCheck(unittest.TestCase):
     def setUp(self):
         self.temporary_directory = TemporaryDirectory()
 
-        database.DATABASE_NAME = str(
-            Path(self.temporary_directory.name) / "test.db"
-        )
+        database.DATABASE_NAME = str(Path(self.temporary_directory.name) / "test.db")
 
     def tearDown(self):
         self.temporary_directory.cleanup()
@@ -30,6 +29,7 @@ class TestHealthCheck(unittest.TestCase):
                     "database": "connected",
                 },
             )
+
 
 if __name__ == "__main__":
     unittest.main()

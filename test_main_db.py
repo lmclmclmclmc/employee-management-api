@@ -4,27 +4,26 @@ from tempfile import TemporaryDirectory
 
 from fastapi.testclient import TestClient
 
-import database 
+import database
 from main_db import app
+
 
 class TestDatabaseEmployeeAPI(unittest.TestCase):
     def setUp(self):
         self.temporary_directory = TemporaryDirectory()
 
-        database.DATABASE_NAME = str(
-            Path(self.temporary_directory.name) / "test.db"
-        )
+        database.DATABASE_NAME = str(Path(self.temporary_directory.name) / "test.db")
 
         database.initialize_database()
 
         self.client = TestClient(app)
         self.client.post(
-    "/register",
-    json={
-        "username": "admin",
-        "password": "development-password",
-    },
-)
+            "/register",
+            json={
+                "username": "admin",
+                "password": "development-password",
+            },
+        )
         login_response = self.client.post(
             "/login",
             data={
@@ -35,9 +34,7 @@ class TestDatabaseEmployeeAPI(unittest.TestCase):
 
         token = login_response.json()["access_token"]
 
-        self.client.headers.update({
-            "Authorization": f"Bearer {token}"
-        })
+        self.client.headers.update({"Authorization": f"Bearer {token}"})
 
     def tearDown(self):
         self.temporary_directory.cleanup()
@@ -46,16 +43,14 @@ class TestDatabaseEmployeeAPI(unittest.TestCase):
         unauthorized_client = TestClient(app)
 
         response = unauthorized_client.post(
-            "/employees",
-            json={"name": "wang", "salary": 8000}
+            "/employees", json={"name": "wang", "salary": 8000}
         )
 
         self.assertEqual(response.status_code, 401)
 
     def test_create_and_list_employees(self):
         create_response = self.client.post(
-            "/employees",
-            json={"name": "wang", "salary": 8000}
+            "/employees", json={"name": "wang", "salary": 8000}
         )
 
         self.assertEqual(create_response.status_code, 201)
@@ -68,15 +63,10 @@ class TestDatabaseEmployeeAPI(unittest.TestCase):
         self.assertEqual(list_response.json()[0]["name"], "wang")
 
     def test_update_and_delete_employee(self):
-        self.client.post(
-            "/employees",
-            json={"name": "li", "salary": 8000}
-        )
+        self.client.post("/employees", json={"name": "li", "salary": 8000})
 
         update_response = self.client.put(
-            "/employees/1",
-            json={"name": "li", "salary": 10000}
-
+            "/employees/1", json={"name": "li", "salary": 10000}
         )
 
         self.assertEqual(update_response.status_code, 200)

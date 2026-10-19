@@ -1,19 +1,19 @@
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from security import create_access_token
+
 from fastapi.testclient import TestClient
 
 import database
 from main_db import app
+from security import create_access_token
+
 
 class TestAuthentication(unittest.TestCase):
     def setUp(self):
         self.temporary_directory = TemporaryDirectory()
 
-        database.DATABASE_NAME = str(
-            Path(self.temporary_directory.name) / "test.db"
-        )
+        database.DATABASE_NAME = str(Path(self.temporary_directory.name) / "test.db")
         database.initialize_database()
         self.client = TestClient(app)
         self.client.post(
@@ -64,19 +64,19 @@ class TestAuthentication(unittest.TestCase):
         self.assertNotIn("password_hash", response.json())
 
     def test_register_duplicate_username(self):
-            response = self.client.post(
-                "/register",
-                json={
-                    "username": "admin",
-                    "password": "another-password",
-                },
-            )
+        response = self.client.post(
+            "/register",
+            json={
+                "username": "admin",
+                "password": "another-password",
+            },
+        )
 
-            self.assertEqual(response.status_code, 409)
-            self.assertEqual(
-                response.json()["detail"],
-                "Username already exists",
-            )
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(
+            response.json()["detail"],
+            "Username already exists",
+        )
 
     def test_register_rejects_short_password(self):
         response = self.client.post(
@@ -95,10 +95,7 @@ class TestAuthentication(unittest.TestCase):
             data={
                 "username": "nobody",
                 "password": "password123",
-            
             },
-
-
         )
 
         self.assertEqual(response.status_code, 401)
@@ -149,7 +146,7 @@ class TestAuthentication(unittest.TestCase):
             "/me",
             headers={
                 "Authorization": "Bearer invalid-token",
-            }
+            },
         )
 
         self.assertEqual(response.status_code, 401)
