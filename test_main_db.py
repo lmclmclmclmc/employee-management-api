@@ -120,6 +120,33 @@ class TestDatabaseEmployeeAPI(unittest.TestCase):
         self.assertEqual(patch_response.status_code, 404)
         self.assertEqual(delete_response.status_code, 404)
 
+    def test_search_employees_by_partial_name(self):
+        self.client.post(
+            "/employees",
+            json={"name": "alice", "salary": 9000},
+        )
+        self.client.post(
+            "/employees",
+            json={"name": "bob", "salary": 8000},
+        )
+
+        response = self.client.get(
+            "/employees",
+            params={"name": "ali"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 1)
+        self.assertEqual(response.json()[0]["name"], "alice")
+
+    def test_search_rejects_empty_name(self):
+        response = self.client.get(
+            "/employees",
+            params={"name": ""},
+        )
+
+        self.assertEqual(response.status_code, 422)
+
 
 if __name__ == "__main__":
     unittest.main()

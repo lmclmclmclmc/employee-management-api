@@ -113,19 +113,26 @@ def create_employee(name, salary):
         return {"id": cursor.lastrowid, "name": name, "salary": salary}
 
 
-def list_employees(limit=10, offset=0):
+def list_employees(limit=10, offset=0, name=None):
+    query = """
+        SELECT id, name, salary
+        FROM employees
+    """
+    parameters = []
+
+    if name is not None:
+        query += " WHERE name LIKE ?"
+        parameters.append(f"%{name}%")
+
+    query += """
+        ORDER BY id
+        LIMIT ? OFFSET ?
+    """
+    parameters.extend([limit, offset])
+
     with sqlite3.connect(DATABASE_NAME) as connection:
         connection.row_factory = sqlite3.Row
-
-        rows = connection.execute(
-            """
-            SELECT id, name, salary 
-            FROM employees 
-            ORDER BY id
-            LIMIT ? OFFSET ?
-            """,
-            (limit, offset),
-        ).fetchall()
+        rows = connection.execute(query, parameters).fetchall()
 
         return [dict(row) for row in rows]
 
