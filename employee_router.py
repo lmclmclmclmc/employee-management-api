@@ -32,8 +32,9 @@ router = APIRouter(
 def list_employees(
     limit: int = Query(default=10, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    name: str | None = Query(default=None, min_length=1),
 ):
-    return list_employees_from_db(limit, offset)
+    return list_employees_from_db(limit, offset, name)
 
 
 @router.get("/{employee_id}", response_model=EmployeeResponse)
