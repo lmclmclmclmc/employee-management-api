@@ -28,6 +28,10 @@
 - 数据库健康检查
 - 自动化测试
 - 环境变量配置
+- 按姓名模糊搜索员工
+- Ruff 代码检查和格式化
+- 测试覆盖率检查
+- GitHub Actions 持续集成
 
 ## 项目结构
 
@@ -114,22 +118,30 @@ http://127.0.0.1:8000/health
 | DELETE | `/employees/{employee_id}` | 是 | 删除员工 |
 | GET | `/health` | 否 | 健康检查 |
 
+员工列表支持分页和姓名搜索：
+
+```text
+GET /employees?limit=10&offset=0&name=wang
+```
+
 ## 运行测试
 
 ```bash
 python -m unittest -v
 ```
 
-当前项目包含 25 个自动化测试，覆盖注册、登录、Token 验证、员工 CRUD、数据校验和健康检查。
+当前项目包含 30 个自动化测试，业务代码覆盖率为 93%，覆盖注册、登录、Token 验证、员工 CRUD、搜索、数据校验和健康检查。
 
-## 登录流程
+运行代码质量检查：
 
-1. 调用 `/register` 注册用户。
-2. 调用 `/login` 获取 `access_token`。
-3. 请求头携带：
-
-```text
-Authorization: Bearer <access_token>
+```bash
+ruff check .
+ruff format --check .
 ```
 
-4. 访问需要登录的员工写接口。
+运行带覆盖率的测试：
+
+```bash
+python -m coverage run -m unittest
+python -m coverage report
+```
