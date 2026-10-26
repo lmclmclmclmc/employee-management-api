@@ -59,6 +59,7 @@ def get_employee(employee_id: int):
 def create_employee(employee: EmployeeCreate):
     return create_employee_in_db(
         employee.name,
+        employee.department,
         employee.salary,
     )
 
@@ -75,6 +76,7 @@ def update_employee(
     employee = update_employee_in_db(
         employee_id,
         employee_update.name,
+        employee_update.department,
         employee_update.salary,
     )
 
@@ -116,10 +118,15 @@ def partially_update_employee(
         "salary",
         current_employee["salary"],
     )
+    new_department = update_data.get(
+        "department",
+        current_employee["department"],
+    )
 
     return update_employee_in_db(
         employee_id,
         new_name,
+        new_department,
         new_salary,
     )
 

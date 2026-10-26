@@ -23,6 +23,13 @@ class Employee(Base):
         Text,
         nullable=False,
     )
+
+    department: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        server_default="General",
+    )
+
     salary: Mapped[float] = mapped_column(
         Float,
         nullable=False,

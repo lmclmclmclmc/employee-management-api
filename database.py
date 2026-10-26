@@ -9,6 +9,7 @@ def initialize_database():
             CREATE TABLE IF NOT EXISTS employees (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
+                department TEXT NOT NULL DEFAULT 'General',
                 salary REAL NOT NULL CHECK (salary >= 0)
             )
         """)
@@ -71,16 +72,17 @@ def check_database_connection():
         return False
 
 
-def update_employee(employee_id, name, salary):
+def update_employee(employee_id, name, department, salary):
     with sqlite3.connect(DATABASE_NAME) as connection:
         cursor = connection.execute(
             """
             UPDATE employees
-            SET name = ?, salary = ?
+            SET name = ?, department = ?, salary = ?
             WHERE id = ?
             """,
             (
                 name,
+                department,
                 salary,
                 employee_id,
             ),
@@ -104,18 +106,27 @@ def delete_employee(employee_id):
     return employee
 
 
-def create_employee(name, salary):
+def create_employee(name, department, salary):
     with sqlite3.connect(DATABASE_NAME) as connection:
         cursor = connection.execute(
-            "INSERT INTO employees (name, salary) VALUES (?, ?)", (name, salary)
+            """
+            INSERT INTO employees (name, department, salary)
+            VALUES (?, ?, ?)
+            """,
+            (name, department, salary),
         )
 
-        return {"id": cursor.lastrowid, "name": name, "salary": salary}
+        return {
+            "id": cursor.lastrowid,
+            "name": name,
+            "department": department,
+            "salary": salary,
+        }
 
 
 def list_employees(limit=10, offset=0, name=None):
     query = """
-        SELECT id, name, salary
+        SELECT id, name, department, salary
         FROM employees
     """
     parameters = []
@@ -143,7 +154,7 @@ def get_employee(employee_id):
 
         row = connection.execute(
             """
-            SELECT id, name, salary
+            SELECT id, name, department, salary
             FROM employees
             WHERE id = ?    
             """,
@@ -158,7 +169,7 @@ def get_employee(employee_id):
 
 if __name__ == "__main__":
     initialize_database()
-    created_employee = create_employee("wang", 8000)
+    created_employee = create_employee("wang", "General", 8000)
 
     print(created_employee)
     print(list_employees())

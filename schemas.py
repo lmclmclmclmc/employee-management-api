@@ -18,15 +18,26 @@ class UserResponse(BaseModel):
 
 class EmployeeCreate(BaseModel):
     name: str = Field(min_length=1)
+    department: str = Field(
+        default="General",
+        min_length=1,
+        max_length=100,
+    )
     salary: float = Field(ge=0)
 
 
 class EmployeeUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1)
+    department: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=100,
+    )
     salary: float | None = Field(default=None, ge=0)
 
 
 class EmployeeResponse(BaseModel):
     id: int
     name: str
+    department: str
     salary: float
