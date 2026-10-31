@@ -3,18 +3,36 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 import database
+from db_session import get_db
 from main_db import app
+from models import Base
 from security import create_access_token
 
 
 class TestAuthentication(unittest.TestCase):
     def setUp(self):
         self.temporary_directory = TemporaryDirectory()
+        database_path = Path(self.temporary_directory.name) / "test.db"
 
-        database.DATABASE_NAME = str(Path(self.temporary_directory.name) / "test.db")
+        database.DATABASE_NAME = str(database_path)
         database.initialize_database()
+
+        self.engine = create_engine(
+            f"sqlite:///{database_path}",
+            connect_args={"check_same_thread": False},
+        )
+        Base.metadata.create_all(self.engine)
+
+        def override_get_db():
+            with Session(self.engine) as session:
+                yield session
+
+        app.dependency_overrides[get_db] = override_get_db
+
         self.client = TestClient(app)
         self.client.post(
             "/register",
@@ -25,6 +43,9 @@ class TestAuthentication(unittest.TestCase):
         )
 
     def tearDown(self):
+        self.client.close()
+        app.dependency_overrides.clear()
+        self.engine.dispose()
         self.temporary_directory.cleanup()
 
     def login(self):
