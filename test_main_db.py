@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-import database
 from db_session import get_db
 from main_db import app
 from models import Base
@@ -17,9 +16,6 @@ class TestDatabaseEmployeeAPI(unittest.TestCase):
         self.temporary_directory = TemporaryDirectory()
 
         database_path = Path(self.temporary_directory.name) / "test.db"
-
-        database.DATABASE_NAME = str(database_path)
-        database.initialize_database()
 
         self.engine = create_engine(
             f"sqlite:///{database_path}",
