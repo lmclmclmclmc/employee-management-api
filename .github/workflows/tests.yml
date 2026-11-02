@@ -28,6 +28,15 @@ jobs:
       - name: Check formatting
         run: ruff format --check .
 
+      - name: Verify database migrations
+        env:
+          DATABASE_URL: sqlite:////tmp/ci_migrations.db
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
+          alembic current
+
       - name: Run tests with coverage
         run: |
           python -m coverage run -m unittest -v

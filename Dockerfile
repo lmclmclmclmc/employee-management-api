@@ -13,6 +13,8 @@ RUN python -m pip install \
 
 COPY . .
 
+RUN chmod +x /app/docker-entrypoint.sh
+
 RUN adduser \
     --disabled-password \
     --gecos "" \
@@ -24,4 +26,5 @@ USER appuser
 
 EXPOSE 8000
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["uvicorn", "main_db:app", "--host", "0.0.0.0", "--port", "8000"]
