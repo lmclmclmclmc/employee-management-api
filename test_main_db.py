@@ -3,18 +3,31 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
-import database
+from db_session import get_db
 from main_db import app
+from models import Base
 
 
 class TestDatabaseEmployeeAPI(unittest.TestCase):
     def setUp(self):
         self.temporary_directory = TemporaryDirectory()
 
-        database.DATABASE_NAME = str(Path(self.temporary_directory.name) / "test.db")
+        database_path = Path(self.temporary_directory.name) / "test.db"
 
-        database.initialize_database()
+        self.engine = create_engine(
+            f"sqlite:///{database_path}",
+            connect_args={"check_same_thread": False},
+        )
+        Base.metadata.create_all(self.engine)
+
+        def override_get_db():
+            with Session(self.engine) as session:
+                yield session
+
+        app.dependency_overrides[get_db] = override_get_db
 
         self.client = TestClient(app)
         self.client.post(
@@ -37,6 +50,9 @@ class TestDatabaseEmployeeAPI(unittest.TestCase):
         self.client.headers.update({"Authorization": f"Bearer {token}"})
 
     def tearDown(self):
+        self.client.close()
+        app.dependency_overrides.clear()
+        self.engine.dispose()
         self.temporary_directory.cleanup()
 
     def test_write_requires_token(self):
@@ -61,6 +77,28 @@ class TestDatabaseEmployeeAPI(unittest.TestCase):
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(len(list_response.json()), 1)
         self.assertEqual(list_response.json()[0]["name"], "wang")
+
+    def test_create_and_list_employees_with_department(self):
+        create_response = self.client.post(
+            "/employees",
+            json={
+                "name": "alice",
+                "department": "Engineering",
+                "salary": 12000,
+            },
+        )
+        self.assertEqual(create_response.status_code, 201)
+        self.assertEqual(create_response.json()["department"], "Engineering")
+
+        response = self.client.post(
+            "/employees",
+            json={
+                "name": "bob",
+                "salary": 12000,
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["department"], "General")
 
     def test_update_and_delete_employee(self):
         self.client.post("/employees", json={"name": "li", "salary": 8000})
@@ -104,6 +142,22 @@ class TestDatabaseEmployeeAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["name"], "chen")
         self.assertEqual(response.json()["salary"], 9500)
+
+    def test_patch_department_employee(self):
+        self.client.post(
+            "/employees",
+            json={"name": "chen", "department": "Sales", "salary": 9000},
+        )
+
+        response = self.client.patch(
+            "/employees/1",
+            json={"department": "Finance"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["department"], "Finance")
+        self.assertEqual(response.json()["name"], "chen")
+        self.assertEqual(response.json()["salary"], 9000)
 
     def test_missing_employee_writes_return_404(self):
         put_response = self.client.put(

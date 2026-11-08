@@ -1,13 +1,11 @@
 import logging
 import time
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from auth_router import router as auth_router
 from config import ALLOWED_ORIGINS
-from database import initialize_database
 from employee_router import router as employee_router
 from health_router import router as health_router
 
@@ -19,16 +17,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    initialize_database()
-    yield
-
-
 app = FastAPI(
     title="Employee Management API",
     version="1.0.0",
-    lifespan=lifespan,
 )
 
 app.include_router(auth_router)
