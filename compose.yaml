@@ -6,7 +6,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_NAME: /app/data/api_employees.db
+      DATABASE_URL: sqlite:////app/data/api_employees.db
     volumes:
       - employee_data:/app/data
     restart: unless-stopped
@@ -25,4 +25,3 @@ services:
 
 volumes:
   employee_data:
-  
