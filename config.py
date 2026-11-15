@@ -9,6 +9,11 @@ DATABASE_NAME = os.getenv(
     "api_employees.db",
 )
 
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    f"sqlite:///{DATABASE_NAME}",
+)
+
 JWT_SECRET_KEY = os.getenv(
     "JWT_SECRET_KEY",
     "development-jwt-secret-key-change-me-123456",

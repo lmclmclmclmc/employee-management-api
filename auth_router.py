@@ -1,13 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
 
-from database import create_user, get_user_by_username
+from db_session import get_db
 from dependencies import get_current_username
 from schemas import TokenResponse, UserCreate, UserResponse
 from security import (
     create_access_token,
     hash_password,
     verify_password,
+)
+from user_repository import (
+    create_user,
+    get_user_by_username,
 )
 
 router = APIRouter(tags=["authentication"])
@@ -25,10 +30,14 @@ def read_current_user(
     status_code=201,
     response_model=UserResponse,
 )
-def register(user: UserCreate):
+def register(
+    user: UserCreate,
+    session: Session = Depends(get_db),
+):
     password_hash = hash_password(user.password)
 
     created_user = create_user(
+        session,
         user.username,
         password_hash,
     )
@@ -48,12 +57,16 @@ def register(user: UserCreate):
 )
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_db),
 ):
-    user = get_user_by_username(form_data.username)
+    user = get_user_by_username(
+        session,
+        form_data.username,
+    )
 
     if user is None or not verify_password(
         form_data.password,
-        user["password_hash"],
+        user.password_hash,
     ):
         raise HTTPException(
             status_code=401,
@@ -61,7 +74,7 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    token = create_access_token(user["username"])
+    token = create_access_token(user.username)
 
     return {
         "access_token": token,

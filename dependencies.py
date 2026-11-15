@@ -1,14 +1,17 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 
-from database import get_user_by_username
+from db_session import get_db
 from security import decode_access_token
+from user_repository import get_user_by_username
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
 def get_current_username(
     token: str = Depends(oauth2_scheme),
+    session: Session = Depends(get_db),
 ) -> str:
     payload = decode_access_token(token)
 
@@ -28,7 +31,10 @@ def get_current_username(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = get_user_by_username(username)
+    user = get_user_by_username(
+        session,
+        username,
+    )
 
     if user is None:
         raise HTTPException(
@@ -37,4 +43,4 @@ def get_current_username(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    return user["username"]
+    return user.username
